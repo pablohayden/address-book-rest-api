@@ -1,8 +1,10 @@
-package com.pablo.addressbook;
+package com.pablo.addressbook.data;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import javax.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -10,6 +12,7 @@ public class AddressBook {
 	
 	private List<Contact> contacts = new ArrayList<Contact>();
 	
+	@Transient
 	private Filter filter;
 	
 	public AddressBook() {

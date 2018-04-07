@@ -1,8 +1,7 @@
 package com.pablo.addressbook;
 
-import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -23,16 +22,18 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pablo.addressbook.data.Contact;
+import com.pablo.addressbook.data.Filter;
 
 @RunWith(SpringRunner.class)
-@WebMvcTest(AddressRestController.class)
+@WebMvcTest(AddressBookRestController.class)
 public class RestControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
-    private AddressBookProxyService addressBookProxyService;
+    private AddressBookRestProxyService addressBookProxyService;
 
     private String unfilteredexpected = "{\"contacts\":[{\"name\":\"Rolling Stones\",\"phone_number\":\"09989898989\",\"address\":\"outhern France\"},{\\\"name\\\":\\\"Bob Dylan\\\",\\\"phone_number\\\":\\\"07989013937\\\",\\\"address\\\":\\\"Highway 66\\\"}]}";
 	
@@ -45,13 +46,6 @@ public class RestControllerTest {
     	contacts.add(new Contact("Bob Dylan","07989013937", "Highway 66"));
     	contacts.add(new Contact("Rolling Stones","07989013937", "Exile on Main Street"));
     	
-    	AddressBook addressbook = new AddressBook(contacts);
-    	
-        given(this.addressBookProxyService.
-            getAddressBook()
-        ).willReturn(addressbook);
-        
-      
     }
     
     @Test
@@ -63,12 +57,11 @@ public class RestControllerTest {
     	
     	String filteredexpected = "{\"contacts\":[{\"name\":\"Rolling Stones\",\"phone_number\":\"07989013937\",\"address\":\"Exile on Main Street\"}],\"filter\":{\"name\":\"Rolling\",\"phone\":\"\",\"address\":\"\"}}";
     			
-    	//Object to JSON in String
     	String json = mapper.writeValueAsString(filter);
     	
     	System.out.println(json);
 
-		MvcResult result = this.mockMvc.perform(post("/addressbook/").contentType(MediaType.APPLICATION_JSON_UTF8).content(json)).andDo(print())
+		MvcResult result = this.mockMvc.perform(patch("/addressbook/").contentType(MediaType.APPLICATION_JSON_UTF8).content(json)).andDo(print())
 				.andExpect(status().isOk())
 				.andExpect(content().json(filteredexpected))
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
@@ -77,6 +70,20 @@ public class RestControllerTest {
     
     @Test
     public void testAddressBookGetRequestUnfiltered() throws Exception {
+
+    	String expected = "{\"contacts\":[{\"name\":\"Test User\",\"phone_number\":\"07989013937\",\"address\":\"Highway 66\"}]}";
+		
+    	
+		MvcResult result = this.mockMvc.perform(get("/addressbook")).andDo(print())
+				.andExpect(status().isOk())
+				.andExpect(content().json(expected))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+			.andReturn();
+
+    }
+    
+    @Test
+    public void testUpdateContact() throws Exception {
 
     	String expected = "{\"contacts\":[{\"name\":\"Test User\",\"phone_number\":\"07989013937\",\"address\":\"Highway 66\"}]}";
 		

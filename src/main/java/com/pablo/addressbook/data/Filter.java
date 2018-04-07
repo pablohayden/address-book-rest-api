@@ -1,4 +1,4 @@
-package com.pablo.addressbook;
+package com.pablo.addressbook.data;
 
 public class Filter {
 
