@@ -12,7 +12,6 @@ public class AddressBook {
 	
 	private List<Contact> contacts = new ArrayList<Contact>();
 	
-	@Transient
 	private Filter filter;
 	
 	public AddressBook() {

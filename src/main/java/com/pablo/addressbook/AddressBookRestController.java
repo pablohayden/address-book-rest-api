@@ -23,7 +23,9 @@ import com.pablo.addressbook.data.Contact;
 import com.pablo.addressbook.data.ContactService;
 import com.pablo.addressbook.data.Filter;
 
+import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
+@EnableSwagger2
 @RestController
 public class AddressBookRestController {
 	
@@ -37,7 +39,7 @@ public class AddressBookRestController {
     @Autowired
     private ContactService contactService; 
     
-    @GetMapping("/initialise")
+    @GetMapping("/addressbook/reload")
     @ResponseBody
     public AddressBook initializeAddress() {
     	
@@ -45,9 +47,12 @@ public class AddressBookRestController {
     	
     	contactService.purge();
     	
-    	
     	addressbook.getContacts().forEach(contact ->{
-    		contactService.save(contact);
+    		try {
+				contactService.save(contact);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
     	});
     	
     
@@ -60,20 +65,14 @@ public class AddressBookRestController {
     	
     	List<Contact> contacts = contactService.findAll();
     	
-    	if(contacts.size() == 0) {
-    		return initializeAddress();
-    	}
-    	else {
-    		return new AddressBook(contacts);
-    	}
-
-    }
+    	return new AddressBook(contacts);
+     }
     
     @PostMapping("/addressbook/filter")
     @ResponseBody
     public AddressBook getAddressBookFiltered(@RequestBody Filter filter) {
     	
-    	AddressBook addresbook = 	addressBookProxyService.getAddressBook();
+    	AddressBook addresbook = contactService.filterContacts(filter);
     	
     	addresbook.applyFilter(filter);
     	
@@ -93,13 +92,19 @@ public class AddressBookRestController {
     		return new ResponseEntity<Void>(HttpStatus.CONFLICT);
          }
 
-          Contact newcontact = contactService.save(contact);
+          Contact newcontact;
+			try {
+				newcontact = contactService.save(contact);
+				   URI location = ServletUriComponentsBuilder
+			  				.fromCurrentRequest().path("/{id}")
+			  				.buildAndExpand(newcontact.getId()).toUri();
+			          
+			          return ResponseEntity.created(location).build();
+			} catch (Exception e) {
+				LOG.info("Unable to save entity {}", contact.getName());
+			}
           
-          URI location = ServletUriComponentsBuilder
-  				.fromCurrentRequest().path("/{id}")
-  				.buildAndExpand(newcontact.getId()).toUri();
-          
-          return ResponseEntity.created(location).build();  
+			return new ResponseEntity<Void>(HttpStatus.CONFLICT);
         
     }
     
@@ -132,6 +137,8 @@ public class AddressBookRestController {
          }
 
           contactService.delete(contact);
+          
+
           
           return new ResponseEntity<Void>(HttpStatus.OK);
       }
